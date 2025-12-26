@@ -115,4 +115,4 @@ export interface Settings {
   language: 'ar' | 'en';
 }
 
-export type ViewMode = 'dashboard' | 'products' | 'categories' | 'sales' | 'purchases' | 'customers' | 'suppliers' | 'reports' | 'settings';
+export type ViewMode = 'dashboard' | 'products' | 'categories' | 'sales' | 'purchases' | 'customers' | 'suppliers' | 'reports' | 'settings' | 'users';
