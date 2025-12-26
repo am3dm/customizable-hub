@@ -12,10 +12,14 @@ import { Users } from '@/components/views/Users';
 import { Debts } from '@/components/views/Debts';
 import { useStore } from '@/store/useStore';
 import { useAuth } from '@/hooks/useAuth';
+import { useStockAlerts } from '@/hooks/useStockAlerts';
 
 const Index = () => {
   const { currentView } = useStore();
   const { hasRole, isAdmin } = useAuth();
+  
+  // Initialize stock alerts
+  useStockAlerts();
 
   const renderView = () => {
     switch (currentView) {
