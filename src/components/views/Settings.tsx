@@ -1,17 +1,60 @@
-import { useState } from 'react';
-import { Save, Store, Percent, Globe, Receipt } from 'lucide-react';
-import { useStore } from '@/store/useStore';
+import { useState, useEffect } from 'react';
+import { Save, Store, Percent, Globe, Receipt, Loader2 } from 'lucide-react';
+import { useStoreSettings, useUpdateStoreSettings } from '@/hooks/useDatabase';
 import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 
 export const Settings = () => {
-  const { settings, updateSettings } = useStore();
-  const [formData, setFormData] = useState(settings);
+  const { data: storeSettings, isLoading } = useStoreSettings();
+  const updateSettings = useUpdateStoreSettings();
+  
+  const [formData, setFormData] = useState({
+    store_name: '',
+    store_phone: '',
+    store_email: '',
+    store_address: '',
+    currency: 'د.ع',
+    tax_rate: 0,
+    invoice_prefix: 'INV',
+    language: 'ar',
+  });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    if (storeSettings) {
+      setFormData({
+        store_name: storeSettings.store_name || '',
+        store_phone: storeSettings.store_phone || '',
+        store_email: storeSettings.store_email || '',
+        store_address: storeSettings.store_address || '',
+        currency: storeSettings.currency || 'د.ع',
+        tax_rate: storeSettings.tax_rate || 0,
+        invoice_prefix: storeSettings.invoice_prefix || 'INV',
+        language: storeSettings.language || 'ar',
+      });
+    }
+  }, [storeSettings]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    updateSettings(formData);
-    toast.success('تم حفظ الإعدادات بنجاح');
+    try {
+      await updateSettings.mutateAsync(formData);
+      toast.success('تم حفظ الإعدادات بنجاح');
+    } catch (error) {
+      toast.error('حدث خطأ أثناء حفظ الإعدادات');
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -37,43 +80,47 @@ export const Settings = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">اسم المتجر *</label>
-              <input
-                type="text"
+            <div className="space-y-2">
+              <Label htmlFor="store_name">اسم المتجر *</Label>
+              <Input
+                id="store_name"
                 required
-                value={formData.storeName}
-                onChange={(e) => setFormData({ ...formData, storeName: e.target.value })}
-                className="input-field"
+                value={formData.store_name}
+                onChange={(e) => setFormData({ ...formData, store_name: e.target.value })}
+                placeholder="اسم المتجر"
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-2">رقم الهاتف</label>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="store_phone">رقم الهاتف</Label>
+              <Input
+                id="store_phone"
                 type="tel"
-                value={formData.storePhone || ''}
-                onChange={(e) => setFormData({ ...formData, storePhone: e.target.value })}
-                className="input-field"
+                value={formData.store_phone}
+                onChange={(e) => setFormData({ ...formData, store_phone: e.target.value })}
+                placeholder="07xxxxxxxxx"
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-2">البريد الإلكتروني</label>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="store_email">البريد الإلكتروني</Label>
+              <Input
+                id="store_email"
                 type="email"
-                value={formData.storeEmail || ''}
-                onChange={(e) => setFormData({ ...formData, storeEmail: e.target.value })}
-                className="input-field"
+                value={formData.store_email}
+                onChange={(e) => setFormData({ ...formData, store_email: e.target.value })}
+                placeholder="email@example.com"
               />
             </div>
 
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium mb-2">العنوان</label>
-              <textarea
-                value={formData.storeAddress || ''}
-                onChange={(e) => setFormData({ ...formData, storeAddress: e.target.value })}
-                className="input-field min-h-[80px]"
+            <div className="md:col-span-2 space-y-2">
+              <Label htmlFor="store_address">العنوان</Label>
+              <Textarea
+                id="store_address"
+                value={formData.store_address}
+                onChange={(e) => setFormData({ ...formData, store_address: e.target.value })}
+                placeholder="عنوان المتجر"
+                rows={2}
               />
             </div>
           </div>
@@ -92,34 +139,39 @@ export const Settings = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">العملة</label>
-              <select
+            <div className="space-y-2">
+              <Label htmlFor="currency">العملة</Label>
+              <Select
                 value={formData.currency}
-                onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
-                className="input-field"
+                onValueChange={(value) => setFormData({ ...formData, currency: value })}
               >
-                <option value="ر.س">ريال سعودي (ر.س)</option>
-                <option value="د.إ">درهم إماراتي (د.إ)</option>
-                <option value="د.ك">دينار كويتي (د.ك)</option>
-                <option value="ر.ع">ريال عماني (ر.ع)</option>
-                <option value="ر.ق">ريال قطري (ر.ق)</option>
-                <option value="د.ب">دينار بحريني (د.ب)</option>
-                <option value="ج.م">جنيه مصري (ج.م)</option>
-                <option value="$">دولار أمريكي ($)</option>
-              </select>
+                <SelectTrigger>
+                  <SelectValue placeholder="اختر العملة" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="د.ع">دينار عراقي (د.ع)</SelectItem>
+                  <SelectItem value="$">دولار أمريكي ($)</SelectItem>
+                  <SelectItem value="ر.س">ريال سعودي (ر.س)</SelectItem>
+                  <SelectItem value="د.إ">درهم إماراتي (د.إ)</SelectItem>
+                  <SelectItem value="د.ك">دينار كويتي (د.ك)</SelectItem>
+                  <SelectItem value="ر.ع">ريال عماني (ر.ع)</SelectItem>
+                  <SelectItem value="ر.ق">ريال قطري (ر.ق)</SelectItem>
+                  <SelectItem value="د.ب">دينار بحريني (د.ب)</SelectItem>
+                  <SelectItem value="ج.م">جنيه مصري (ج.م)</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-2">نسبة الضريبة (%)</label>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="tax_rate">نسبة الضريبة (%)</Label>
+              <Input
+                id="tax_rate"
                 type="number"
                 min="0"
                 max="100"
                 step="0.1"
-                value={formData.taxRate}
-                onChange={(e) => setFormData({ ...formData, taxRate: parseFloat(e.target.value) })}
-                className="input-field"
+                value={formData.tax_rate}
+                onChange={(e) => setFormData({ ...formData, tax_rate: parseFloat(e.target.value) || 0 })}
               />
             </div>
           </div>
@@ -137,17 +189,17 @@ export const Settings = () => {
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium mb-2">بادئة رقم الفاتورة</label>
-            <input
-              type="text"
-              value={formData.invoicePrefix}
-              onChange={(e) => setFormData({ ...formData, invoicePrefix: e.target.value })}
-              className="input-field max-w-xs"
-              placeholder="INV-"
+          <div className="space-y-2">
+            <Label htmlFor="invoice_prefix">بادئة رقم الفاتورة</Label>
+            <Input
+              id="invoice_prefix"
+              value={formData.invoice_prefix}
+              onChange={(e) => setFormData({ ...formData, invoice_prefix: e.target.value })}
+              placeholder="INV"
+              className="max-w-xs"
             />
-            <p className="text-sm text-muted-foreground mt-1">
-              مثال: {formData.invoicePrefix}000001
+            <p className="text-sm text-muted-foreground">
+              مثال: {formData.invoice_prefix}000001
             </p>
           </div>
         </div>
@@ -164,24 +216,37 @@ export const Settings = () => {
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium mb-2">اللغة</label>
-            <select
+          <div className="space-y-2">
+            <Label htmlFor="language">اللغة</Label>
+            <Select
               value={formData.language}
-              onChange={(e) => setFormData({ ...formData, language: e.target.value as 'ar' | 'en' })}
-              className="input-field max-w-xs"
+              onValueChange={(value) => setFormData({ ...formData, language: value })}
             >
-              <option value="ar">العربية</option>
-              <option value="en">English</option>
-            </select>
+              <SelectTrigger className="max-w-xs">
+                <SelectValue placeholder="اختر اللغة" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ar">العربية</SelectItem>
+                <SelectItem value="en">English</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
         {/* Submit */}
-        <button type="submit" className="btn-primary">
-          <Save size={20} />
-          حفظ الإعدادات
-        </button>
+        <Button type="submit" disabled={updateSettings.isPending} className="gap-2">
+          {updateSettings.isPending ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              جاري الحفظ...
+            </>
+          ) : (
+            <>
+              <Save size={20} />
+              حفظ الإعدادات
+            </>
+          )}
+        </Button>
       </form>
     </div>
   );
