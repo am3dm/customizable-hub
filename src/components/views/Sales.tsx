@@ -1,14 +1,14 @@
-import { useState, useRef } from 'react';
-import { Plus, Search, ShoppingCart, Minus, Trash2, CreditCard, Banknote, Receipt, Printer, Loader2 } from 'lucide-react';
+import { useState, useRef, useCallback } from 'react';
+import { Plus, Search, ShoppingCart, Minus, Trash2, CreditCard, Banknote, Receipt, Printer, Loader2, ScanBarcode } from 'lucide-react';
 import { useProducts, useCategories, useCustomers, useCreateInvoice, useStoreSettings } from '@/hooks/useDatabase';
 import { formatCurrency } from '@/lib/utils';
 import { toast } from 'sonner';
-import { useStore } from '@/store/useStore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ThermalInvoicePrint } from '@/components/ThermalInvoicePrint';
+import { BarcodeScanner } from '@/components/BarcodeScanner';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -64,6 +64,22 @@ export const Sales = () => {
     ? (paidAmount ? parseFloat(paidAmount) : 0)
     : total;
   const remaining = Math.max(0, total - paid);
+
+  // Handle barcode scan
+  const handleBarcodeScan = useCallback((barcode: string) => {
+    const product = products.find(p => p.barcode === barcode || p.sku === barcode);
+    if (product) {
+      if (product.quantity > 0 && product.is_active) {
+        addToCart(product);
+        toast.success(`تمت إضافة: ${product.name}`);
+      } else {
+        toast.error('المنتج غير متوفر');
+      }
+    } else {
+      toast.error('لم يتم العثور على المنتج');
+      setSearchQuery(barcode); // Set as search query for manual lookup
+    }
+  }, [products]);
 
   const addToCart = (product: any) => {
     const existingItem = cart.find(item => item.id === product.id);
@@ -238,8 +254,8 @@ export const Sales = () => {
         {/* Products */}
         <div className="lg:col-span-2 space-y-4">
           {/* Search & Filter */}
-          <div className="flex gap-4">
-            <div className="relative flex-1">
+          <div className="flex gap-4 flex-wrap">
+            <div className="relative flex-1 min-w-[200px]">
               <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
               <Input
                 type="text"
@@ -249,6 +265,7 @@ export const Sales = () => {
                 className="pr-10"
               />
             </div>
+            <BarcodeScanner onScan={handleBarcodeScan} buttonText="مسح الباركود" />
             <Select value={selectedCategory} onValueChange={setSelectedCategory}>
               <SelectTrigger className="min-w-[150px]">
                 <SelectValue placeholder="جميع التصنيفات" />
