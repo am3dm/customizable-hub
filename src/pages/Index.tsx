@@ -8,10 +8,14 @@ import { Customers } from '@/components/views/Customers';
 import { Suppliers } from '@/components/views/Suppliers';
 import { Reports } from '@/components/views/Reports';
 import { Settings } from '@/components/views/Settings';
+import { Users } from '@/components/views/Users';
+import { Debts } from '@/components/views/Debts';
 import { useStore } from '@/store/useStore';
+import { useAuth } from '@/hooks/useAuth';
 
 const Index = () => {
   const { currentView } = useStore();
+  const { hasRole, isAdmin } = useAuth();
 
   const renderView = () => {
     switch (currentView) {
@@ -22,17 +26,45 @@ const Index = () => {
       case 'categories':
         return <Categories />;
       case 'sales':
-        return <Sales />;
+        if (hasRole('sales') || isAdmin()) {
+          return <Sales />;
+        }
+        return <Dashboard />;
       case 'purchases':
-        return <Purchases />;
+        if (hasRole('warehouse') || isAdmin()) {
+          return <Purchases />;
+        }
+        return <Dashboard />;
       case 'customers':
-        return <Customers />;
+        if (hasRole('sales') || isAdmin()) {
+          return <Customers />;
+        }
+        return <Dashboard />;
       case 'suppliers':
-        return <Suppliers />;
+        if (hasRole('warehouse') || isAdmin()) {
+          return <Suppliers />;
+        }
+        return <Dashboard />;
       case 'reports':
-        return <Reports />;
+        if (hasRole('accountant') || isAdmin()) {
+          return <Reports />;
+        }
+        return <Dashboard />;
       case 'settings':
-        return <Settings />;
+        if (isAdmin()) {
+          return <Settings />;
+        }
+        return <Dashboard />;
+      case 'users':
+        if (isAdmin()) {
+          return <Users />;
+        }
+        return <Dashboard />;
+      case 'debts':
+        if (hasRole('sales') || hasRole('accountant') || isAdmin()) {
+          return <Debts />;
+        }
+        return <Dashboard />;
       default:
         return <Dashboard />;
     }

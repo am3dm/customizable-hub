@@ -6,19 +6,33 @@ import {
   Clock, 
   DollarSign,
   ShoppingCart,
-  CreditCard
+  CreditCard,
+  Loader2
 } from 'lucide-react';
-import { useStore } from '@/store/useStore';
+import { useProducts, useInvoices, useStoreSettings, useDashboardStats } from '@/hooks/useDatabase';
 import { formatCurrency } from '@/lib/utils';
 
 export const Dashboard = () => {
-  const { getDashboardStats, settings, products, invoices } = useStore();
-  const stats = getDashboardStats();
+  const { data: products = [], isLoading: productsLoading } = useProducts();
+  const { data: invoices = [], isLoading: invoicesLoading } = useInvoices();
+  const { data: storeSettings, isLoading: settingsLoading } = useStoreSettings();
+  const { data: stats, isLoading: statsLoading } = useDashboardStats();
+
+  const isLoading = productsLoading || invoicesLoading || settingsLoading || statsLoading;
+  const currency = storeSettings?.currency || 'د.ع';
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   const statCards = [
     {
       title: 'إجمالي المبيعات',
-      value: formatCurrency(stats.totalSales, settings.currency),
+      value: formatCurrency(stats?.totalSales || 0, currency),
       icon: <DollarSign size={24} />,
       trend: '+12%',
       trendUp: true,
@@ -26,7 +40,7 @@ export const Dashboard = () => {
     },
     {
       title: 'مبيعات اليوم',
-      value: formatCurrency(stats.todaySales, settings.currency),
+      value: formatCurrency(stats?.todaySales || 0, currency),
       icon: <ShoppingCart size={24} />,
       trend: '+5%',
       trendUp: true,
@@ -34,7 +48,7 @@ export const Dashboard = () => {
     },
     {
       title: 'إجمالي المشتريات',
-      value: formatCurrency(stats.totalPurchases, settings.currency),
+      value: formatCurrency(stats?.totalPurchases || 0, currency),
       icon: <CreditCard size={24} />,
       trend: '-3%',
       trendUp: false,
@@ -42,7 +56,7 @@ export const Dashboard = () => {
     },
     {
       title: 'صافي الربح',
-      value: formatCurrency(stats.totalProfit, settings.currency),
+      value: formatCurrency(stats?.totalProfit || 0, currency),
       icon: <TrendingUp size={24} />,
       trend: '+8%',
       trendUp: true,
@@ -50,25 +64,25 @@ export const Dashboard = () => {
     },
     {
       title: 'إجمالي المنتجات',
-      value: stats.totalProducts.toString(),
+      value: (stats?.totalProducts || 0).toString(),
       icon: <Package size={24} />,
       color: 'bg-info/10 text-info',
     },
     {
       title: 'منتجات منخفضة المخزون',
-      value: stats.lowStockProducts.toString(),
+      value: (stats?.lowStockProducts || 0).toString(),
       icon: <AlertTriangle size={24} />,
       color: 'bg-destructive/10 text-destructive',
     },
     {
       title: 'فواتير معلقة',
-      value: stats.pendingInvoices.toString(),
+      value: (stats?.pendingInvoices || 0).toString(),
       icon: <Clock size={24} />,
       color: 'bg-warning/10 text-warning',
     },
     {
       title: 'مبيعات الشهر',
-      value: formatCurrency(stats.monthSales, settings.currency),
+      value: formatCurrency(stats?.monthSales || 0, currency),
       icon: <TrendingUp size={24} />,
       trend: '+15%',
       trendUp: true,
@@ -76,8 +90,8 @@ export const Dashboard = () => {
     },
   ];
 
-  const lowStockProducts = products.filter(p => p.quantity <= p.minQuantity);
-  const recentInvoices = invoices.slice(-5).reverse();
+  const lowStockProducts = products.filter(p => p.quantity <= p.min_quantity);
+  const recentInvoices = invoices.slice(0, 5);
 
   return (
     <div className="space-y-6">
@@ -85,7 +99,7 @@ export const Dashboard = () => {
       <div className="page-header">
         <div>
           <h1 className="page-title">لوحة التحكم</h1>
-          <p className="text-muted-foreground">مرحباً بك في نظام إدارة {settings.storeName}</p>
+          <p className="text-muted-foreground">مرحباً بك في نظام إدارة {storeSettings?.store_name || 'المتجر'}</p>
         </div>
       </div>
 
@@ -137,7 +151,7 @@ export const Dashboard = () => {
                   </div>
                   <div className="text-left">
                     <p className="font-bold text-destructive">{product.quantity} {product.unit}</p>
-                    <p className="text-xs text-muted-foreground">الحد الأدنى: {product.minQuantity}</p>
+                    <p className="text-xs text-muted-foreground">الحد الأدنى: {product.min_quantity}</p>
                   </div>
                 </div>
               ))}
@@ -161,13 +175,13 @@ export const Dashboard = () => {
                   className="flex items-center justify-between p-3 bg-muted/50 rounded-xl"
                 >
                   <div>
-                    <p className="font-medium">{invoice.invoiceNumber}</p>
+                    <p className="font-medium">{invoice.invoice_number}</p>
                     <p className="text-sm text-muted-foreground">
-                      {new Date(invoice.createdAt).toLocaleDateString('ar-SA')}
+                      {new Date(invoice.created_at).toLocaleDateString('ar-SA')}
                     </p>
                   </div>
                   <div className="text-left">
-                    <p className="font-bold">{formatCurrency(invoice.total, settings.currency)}</p>
+                    <p className="font-bold">{formatCurrency(invoice.total, currency)}</p>
                     <span className={`badge ${
                       invoice.status === 'completed' ? 'badge-success' : 
                       invoice.status === 'pending' ? 'badge-warning' : 'badge-destructive'
