@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_logs: {
+        Row: {
+          action: string
+          created_at: string
+          details: string | null
+          id: string
+          ip_address: string | null
+          new_data: Json | null
+          old_data: Json | null
+          record_id: string | null
+          table_name: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          details?: string | null
+          id?: string
+          ip_address?: string | null
+          new_data?: Json | null
+          old_data?: Json | null
+          record_id?: string | null
+          table_name?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: string | null
+          id?: string
+          ip_address?: string | null
+          new_data?: Json | null
+          old_data?: Json | null
+          record_id?: string | null
+          table_name?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           color: string | null
@@ -147,6 +186,7 @@ export type Database = {
           discount: number | null
           id: string
           invoice_number: string
+          is_synced: boolean | null
           notes: string | null
           paid: number | null
           payment_method: string | null
@@ -165,6 +205,7 @@ export type Database = {
           discount?: number | null
           id?: string
           invoice_number: string
+          is_synced?: boolean | null
           notes?: string | null
           paid?: number | null
           payment_method?: string | null
@@ -183,6 +224,7 @@ export type Database = {
           discount?: number | null
           id?: string
           invoice_number?: string
+          is_synced?: boolean | null
           notes?: string | null
           paid?: number | null
           payment_method?: string | null
@@ -240,6 +282,47 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      payments: {
+        Row: {
+          amount_paid: number
+          created_at: string
+          created_by: string | null
+          customer_id: string
+          id: string
+          note: string | null
+          payment_date: string
+          payment_method: string | null
+        }
+        Insert: {
+          amount_paid?: number
+          created_at?: string
+          created_by?: string | null
+          customer_id: string
+          id?: string
+          note?: string | null
+          payment_date?: string
+          payment_method?: string | null
+        }
+        Update: {
+          amount_paid?: number
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string
+          id?: string
+          note?: string | null
+          payment_date?: string
+          payment_method?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       products: {
         Row: {
@@ -312,6 +395,7 @@ export type Database = {
           id: string
           is_active: boolean | null
           phone: string | null
+          pin_code: string | null
           updated_at: string
           user_id: string
         }
@@ -323,6 +407,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           phone?: string | null
+          pin_code?: string | null
           updated_at?: string
           user_id: string
         }
@@ -334,6 +419,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           phone?: string | null
+          pin_code?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -345,6 +431,7 @@ export type Database = {
           currency: string | null
           id: string
           invoice_prefix: string | null
+          is_setup_completed: boolean | null
           language: string | null
           logo_url: string | null
           store_address: string | null
@@ -359,6 +446,7 @@ export type Database = {
           currency?: string | null
           id?: string
           invoice_prefix?: string | null
+          is_setup_completed?: boolean | null
           language?: string | null
           logo_url?: string | null
           store_address?: string | null
@@ -373,6 +461,7 @@ export type Database = {
           currency?: string | null
           id?: string
           invoice_prefix?: string | null
+          is_setup_completed?: boolean | null
           language?: string | null
           logo_url?: string | null
           store_address?: string | null
